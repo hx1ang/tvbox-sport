@@ -2,18 +2,6 @@
     "spider": "https://raw.githubusercontent.com/qist/tvbox/master/jar/spider.jar",
     "sites": [
         {
-            "key": "多多",
-            "name": "🏀多多┃回放",
-            "type": 3,
-            "api": "csp_DoubaoGuard",
-            "searchable": 0,
-            "quickSearch": 0,
-            "changeable": 0,
-            "style": {
-                "type": "list"
-            }
-        },
-        {
             "key": "88看球",
             "name": "88 • 看球",
             "type": 3,
@@ -80,6 +68,18 @@
             "api": "csp_KanqiuGuard",
             "timeout": 10,
             "searchable": 0,
+            "changeable": 0,
+            "style": {
+                "type": "list"
+            }
+        },
+        {
+            "key": "多多",
+            "name": "🏀多多┃回放",
+            "type": 3,
+            "api": "csp_DoubaoGuard",
+            "searchable": 0,
+            "quickSearch": 0,
             "changeable": 0,
             "style": {
                 "type": "list"
