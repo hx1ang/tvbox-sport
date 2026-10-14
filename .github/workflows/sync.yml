@@ -25,17 +25,31 @@ jobs:
 
           collected_sites = {}
 
-          # 仅精准抓取 xiaosa 里的体育源（xiaosa 的源目前测试最稳定、能正常播放）
-          xiaosa_keys = ["88看球", "飞球体育", "瓜子体育", "咖啡体育", "吃瓜", "多多"]
-          
+          # 1. 优先从 fty.json 中精准抓取核心 Guard 体育源（八八、多多、吃瓜）
+          fty_target_keys = ["看球", "多多", "吃瓜"]
+          try:
+              req2 = urllib.request.urlopen("https://raw.githubusercontent.com/qist/tvbox/main/fty.json")
+              data2 = json.loads(req2.read().decode("utf-8"))
+              for site in data2.get("sites", []):
+                  s_key = site.get("key", "")
+                  if s_key in fty_target_keys:
+                      collected_sites[s_key] = site
+          except Exception as e:
+              print(f"Error fty: {e}")
+
+          # 2. 从 xiaosa 中补充其他体育源（飞球、瓜子、咖啡等，同时防止网盘源混入）
+          xiaosa_keys = ["飞球体育", "瓜子体育", "咖啡体育", "88看球"]
           try:
               req1 = urllib.request.urlopen("https://raw.githubusercontent.com/qist/tvbox/master/xiaosa/api.json")
               data1 = json.loads(req1.read().decode("utf-8"))
               for site in data1.get("sites", []):
-                  if site.get("key") in xiaosa_keys:
-                      collected_sites[site["key"]] = site
+                  s_key = site.get("key", "")
+                  s_name = site.get("name", "")
+                  # 严格过滤掉带有网盘或4K影视的误伤
+                  if s_key in xiaosa_keys and "4K" not in s_name and "盘" not in s_name:
+                      collected_sites[s_key] = site
           except Exception as e:
-              print(f"Error: {e}")
+              print(f"Error xiaosa: {e}")
 
           main_config = {
               "spider": "https://raw.githubusercontent.com/qist/tvbox/master/jar/spider.jar",
@@ -49,7 +63,7 @@ jobs:
 
           with open("sport.json", "w", encoding="utf-8") as f:
               json.dump(main_config, f, ensure_ascii=False, indent=4)
-          print("Success! Total stable sites:", len(main_config["sites"]))
+          print("Success! Total clean sports sites:", len(main_config["sites"]))
           '
 
       - name: Commit and push changes using native git
@@ -58,5 +72,5 @@ jobs:
           git config --global user.email "github-actions[bot]@users.noreply.github.data"
           git add sport.json
           git status
-          git commit -m "Auto-sync stable xiaosa sports sites only" || echo "No changes to commit"
+          git commit -m "Auto-sync ultimate sports configuration with correct Guard apis" || echo "No changes to commit"
           git push
