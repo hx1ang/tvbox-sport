@@ -23,12 +23,12 @@ jobs:
           import urllib.request
           import json
 
-          # 精准的目标源 key 列表（过滤掉云盘、影视、戏曲等无关项）
-          target_keys = ["88看球", "飞球体育", "瓜子体育", "咖啡体育", "看球", "多多", "吃瓜"]
+          # 绝对精准匹配的 key 白名单（只收录这几个纯体育源，绝不带杂项）
+          exact_keys = ["88看球", "飞球体育", "瓜子体育", "咖啡体育", "吃瓜", "多多", "Kanqiu", "Duoduo", "Chigua"]
           
-          # 必须包含的体育/回放/看球特征词，名称里必须带有这些才会被收录
-          sport_keywords = ["看球", "回放", "体育", "Sports", "Guard"]
-          
+          # 必须包含的精准体育后缀（防止单纯叫“多多”但不是体育源的混进来）
+          required_tags = ["看球", "回放", "体育"]
+
           collected_sites = {}
 
           def filter_and_add(sites_list):
@@ -36,14 +36,12 @@ jobs:
                   s_key = site.get("key", "")
                   s_name = site.get("name", "")
                   
-                  # 条件1：key 在我们指定的体育白名单里，或者 name 里明确带有体育特征
-                  is_target_key = any(k in s_key for k in target_keys)
-                  has_sport_tag = any(kw in s_name for kw in sport_keywords)
+                  # 必须满足：key 在白名单里，且名字里必须带有“看球”、“回放”或“体育”
+                  is_exact_key = s_key in exact_keys
+                  has_sport_tag = any(tag in s_name for tag in required_tags)
                   
-                  # 严格排除网盘、4K影视等无关源
-                  is_invalid = "4K" in s_name or "盘" in s_name or "影视" in s_name or "电影" in s_name
-                  
-                  if (is_target_key or has_sport_tag) and not is_invalid:
+                  # 如果是“戏曲多多”，它的 key 虽然叫多多，但 name 是“戏曲 • 多多”，没有体育标签，会被完美拦截！
+                  if is_exact_key and has_sport_tag:
                       collected_sites[s_key] = site
 
           # 1. 抓取 xiaosa 源
@@ -74,7 +72,7 @@ jobs:
 
           with open("sport.json", "w", encoding="utf-8") as f:
               json.dump(main_config, f, ensure_ascii=False, indent=4)
-          print("Success! Total clean sports sites:", len(main_config["sites"]))
+          print("Success! Total precise sports sites:", len(main_config["sites"]))
           '
 
       - name: Commit and push changes using native git
@@ -83,5 +81,5 @@ jobs:
           git config --global user.email "github-actions[bot]@users.noreply.github.data"
           git add sport.json
           git status
-          git commit -m "Auto-sync precise sports sites only" || echo "No changes to commit"
+          git commit -m "Auto-sync strictly filtered sports sites" || echo "No changes to commit"
           git push
