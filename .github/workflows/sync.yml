@@ -23,9 +23,11 @@ jobs:
           import urllib.request
           import json
 
+          # 你的目标 key
           target_keys = ["88看球", "飞球体育", "瓜子体育", "咖啡体育", "看球", "多多", "吃瓜"]
           collected_sites = {}
 
+          # 1. 抓取 xiaosa 源
           try:
               req1 = urllib.request.urlopen("https://raw.githubusercontent.com/qist/tvbox/master/xiaosa/api.json")
               data1 = json.loads(req1.read().decode("utf-8"))
@@ -35,6 +37,7 @@ jobs:
           except Exception as e:
               print(f"Error 1: {e}")
 
+          # 2. 抓取 fty 源（如果 key 相同会直接覆盖并补充完整的 ext 等参数）
           try:
               req2 = urllib.request.urlopen("https://raw.githubusercontent.com/qist/tvbox/master/fty.json")
               data2 = json.loads(req2.read().decode("utf-8"))
@@ -44,6 +47,7 @@ jobs:
           except Exception as e:
               print(f"Error 2: {e}")
 
+          # 3. 组装完整主接口（直接采用 qist 仓库标准的 spider 和其他基础配置）
           main_config = {
               "spider": "https://raw.githubusercontent.com/qist/tvbox/master/jar/spider.jar",
               "sites": list(collected_sites.values()),
@@ -62,5 +66,5 @@ jobs:
       - name: Commit and push if changed
         uses: stefanzweifel/git-auto-commit-action@v4
         with:
-          commit_message: "Auto-sync sports sites and update main sport.json"
+          commit_message: "Auto-sync full site objects including ext parameters"
           file_pattern: sport.json
