@@ -1,0 +1,69 @@
+name: Sync TVBox Main API
+
+on:
+  scheduled:
+    - cron: '0 13 * * *' # 每天北京时间晚上 21:00 自动更新
+  workflow_dispatch:
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Run sync script
+        run: |
+          python -c '
+          import urllib.request
+          import json
+
+          target_keys = ["88看球", "飞球体育", "瓜子体育", "咖啡体育", "看球", "多多", "吃瓜"]
+          collected_sites = {}
+
+          # 拉取原作者的两个接口并提取你指定的体育源
+          try:
+              req1 = urllib.request.urlopen("https://raw.githubusercontent.com/qist/tvbox/master/xiaosa/api.json")
+              data1 = json.loads(req1.read().decode("utf-8"))
+              for site in data1.get("sites", []):
+                  if site.get("key") in target_keys:
+                      collected_sites[site["key"]] = site
+          except Exception as e:
+              print(f"Error 1: {e}")
+
+          try:
+              req2 = urllib.request.urlopen("https://raw.githubusercontent.com/qist/tvbox/master/fty.json")
+              data2 = json.loads(req2.read().decode("utf-8"))
+              for site in data2.get("sites", []):
+                  if site.get("key") in target_keys:
+                      collected_sites[site["key"]] = site
+          except Exception as e:
+              print(f"Error 2: {e}")
+
+          # 组装成一个完整的、带有 jar 包驱动的 TvBox 主接口
+          # 这里复用了 qist 仓库标准的 spider 和基础配置结构
+          main_config = {
+              "spider": "https://raw.githubusercontent.com/qist/tvbox/master/jar/spider.jar",
+              "sites": list(collected_sites.values()),
+              "parses": [
+                  {"name": "聚合", "type": 3, "url": "json"},
+                  {"name": "咸鱼", "type": 0, "url": "https://jx.xyflv.cc/?url="}
+              ],
+              "flags": ["qq", "qiyi", "youku", "mgtv", "letv", "pptv", "sohu", "bilibili"]
+          }
+
+          with open("sport.json", "w", encoding="utf-8") as f:
+              json.dump(main_config, f, ensure_ascii=False, indent=4)
+          print("Success! Total sites:", len(main_config["sites"]))
+          '
+
+      - name: Commit and push if changed
+        uses: stefanzweifel/git-auto-commit-action@v4
+        with:
+          commit_message: "Auto-sync sports sites and update main sport.json"
+          file_pattern: sport.json
