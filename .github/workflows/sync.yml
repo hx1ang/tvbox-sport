@@ -23,19 +23,34 @@ jobs:
           import urllib.request
           import json
 
-          # 兼容匹配 key 或完整 name（包含 🏀多多┃回放 等）
-          target_keywords = ["88看球", "飞球体育", "瓜子体育", "咖啡体育", "看球", "多多", "吃瓜", "🏀多多┃回放", "⚽八八┃看球", "🏐吃瓜┃看球"]
+          # 精准的目标源 key 列表（过滤掉云盘、影视、戏曲等无关项）
+          target_keys = ["88看球", "飞球体育", "瓜子体育", "咖啡体育", "看球", "多多", "吃瓜"]
+          
+          # 必须包含的体育/回放/看球特征词，名称里必须带有这些才会被收录
+          sport_keywords = ["看球", "回放", "体育", "Sports", "Guard"]
+          
           collected_sites = {}
+
+          def filter_and_add(sites_list):
+              for site in sites_list:
+                  s_key = site.get("key", "")
+                  s_name = site.get("name", "")
+                  
+                  # 条件1：key 在我们指定的体育白名单里，或者 name 里明确带有体育特征
+                  is_target_key = any(k in s_key for k in target_keys)
+                  has_sport_tag = any(kw in s_name for kw in sport_keywords)
+                  
+                  # 严格排除网盘、4K影视等无关源
+                  is_invalid = "4K" in s_name or "盘" in s_name or "影视" in s_name or "电影" in s_name
+                  
+                  if (is_target_key or has_sport_tag) and not is_invalid:
+                      collected_sites[s_key] = site
 
           # 1. 抓取 xiaosa 源
           try:
               req1 = urllib.request.urlopen("https://raw.githubusercontent.com/qist/tvbox/master/xiaosa/api.json")
               data1 = json.loads(req1.read().decode("utf-8"))
-              for site in data1.get("sites", []):
-                  s_key = site.get("key", "")
-                  s_name = site.get("name", "")
-                  if any(k in s_key or k in s_name for k in target_keywords):
-                      collected_sites[s_key] = site
+              filter_and_add(data1.get("sites", []))
           except Exception as e:
               print(f"Error 1: {e}")
 
@@ -43,11 +58,7 @@ jobs:
           try:
               req2 = urllib.request.urlopen("https://raw.githubusercontent.com/qist/tvbox/master/fty.json")
               data2 = json.loads(req2.read().decode("utf-8"))
-              for site in data2.get("sites", []):
-                  s_key = site.get("key", "")
-                  s_name = site.get("name", "")
-                  if any(k in s_key or k in s_name for k in target_keywords):
-                      collected_sites[s_key] = site
+              filter_and_add(data2.get("sites", []))
           except Exception as e:
               print(f"Error 2: {e}")
 
@@ -63,7 +74,7 @@ jobs:
 
           with open("sport.json", "w", encoding="utf-8") as f:
               json.dump(main_config, f, ensure_ascii=False, indent=4)
-          print("Success! Total sites:", len(main_config["sites"]))
+          print("Success! Total clean sports sites:", len(main_config["sites"]))
           '
 
       - name: Commit and push changes using native git
@@ -72,5 +83,5 @@ jobs:
           git config --global user.email "github-actions[bot]@users.noreply.github.data"
           git add sport.json
           git status
-          git commit -m "Auto-sync sport.json with full name matching" || echo "No changes to commit"
+          git commit -m "Auto-sync precise sports sites only" || echo "No changes to commit"
           git push
