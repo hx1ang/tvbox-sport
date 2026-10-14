@@ -1,5 +1,5 @@
 {
-    "spider": "https://raw.githubusercontent.com/qist/tvbox/master/jar/spider.jar",
+    "spider": "./jar/spider.jar",
     "sites": [
         {
             "key": "88看球",
@@ -24,7 +24,7 @@
             "style": {
                 "type": "list"
             },
-            "jar": "https://raw.githubusercontent.com/qist/tvbox/master/jar/fan.txt;md5;c9024ccf34209d26eb556c728c3f07fa"
+            "jar": "./jar/fan.txt"
         },
         {
             "key": "飞球体育",
@@ -73,7 +73,7 @@
             "style": {
                 "type": "list"
             },
-            "jar": "https://raw.githubusercontent.com/qist/tvbox/master/jar/fan.txt;md5;c9024ccf34209d26eb556c728c3f07fa"
+            "jar": "./jar/fan.txt"
         },
         {
             "key": "多多",
@@ -86,7 +86,7 @@
             "style": {
                 "type": "list"
             },
-            "jar": "https://raw.githubusercontent.com/qist/tvbox/master/jar/fan.txt;md5;c9024ccf34209d26eb556c728c3f07fa"
+            "jar": "./jar/fan.txt"
         }
     ],
     "parses": [
