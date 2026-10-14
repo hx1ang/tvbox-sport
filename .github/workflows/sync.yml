@@ -24,30 +24,36 @@ jobs:
           import json
 
           collected_sites = {}
-          common_jar = "https://xiuxiu-pro-new.meitudata.com/posters/224984cc747efdb5fb1a529803032e0f.jpg;md5;c9024ccf34209d26eb556c728c3f07fa"
 
-          # 1. 简化的 FTY 核心源（共用同一个 jar 驱动）
-          fty_guard_sources = [
-              {"key": "看球", "name": "⚽八八┃看球", "api": "csp_KanqiuGuard"},
-              {"key": "吃瓜", "name": "🏐吃瓜┃看球", "api": "csp_LiveGzGuard"},
-              {"key": "多多", "name": "🏀多多┃回放", "api": "csp_DoubaoGuard"}
-          ]
+          # 1. 动态抓取 fty.json，自动捕获上游最新的 spider 驱动路径，并赋值给 FTY 的 3 个源
+          fty_spider = "https://raw.githubusercontent.com/qist/tvbox/master/jar/fan.txt" # 默认兜底
+          fty_mapping = {
+              "看球": "⚽八八┃看球",
+              "吃瓜": "🏐吃瓜┃看球",
+              "多多": "🏀多多┃回放"
+          }
+          try:
+              req_fty = urllib.request.urlopen("https://raw.githubusercontent.com/qist/tvbox/master/fty.json")
+              data_fty = json.loads(req_fty.read().decode("utf-8"))
+              
+              # 自动提取 fty.json 里的全局 spider 配置（支持带 md5 后缀的完整字符串）
+              if "spider" in data_fty and data_fty["spider"]:
+                  raw_spider = data_fty["spider"]
+                  if raw_spider.startswith("./"):
+                      fty_spider = "https://raw.githubusercontent.com/qist/tvbox/master/" + raw_spider[2:]
+                  else:
+                      fty_spider = raw_spider
 
-          for item in fty_guard_sources:
-              collected_sites[item["key"]] = {
-                  "key": item["key"],
-                  "name": item["name"],
-                  "type": 3,
-                  "api": item["api"],
-                  "searchable": 0,
-                  "quickSearch": 0 if item["key"] != "看球" else None,
-                  "changeable": 0,
-                  "style": {"type": "list"},
-                  "jar": common_jar
-              }
-              # 顺手清理掉值为 None 的键（保持格式干净）
-              if collected_sites[item["key"]].get("quickSearch") is None:
-                  del collected_sites[item["key"]]["quickSearch"]
+              for site in data_fty.get("sites", []):
+                  s_key = site.get("key", "")
+                  if s_key in fty_mapping:
+                      site["name"] = fty_mapping[s_key]
+                      # 动态挂载上游最新的专属 jar 驱动（包含上游自带的 md5 校验）
+                      site["jar"] = fty_spider
+                      collected_sites[s_key] = site
+              print("FTY sources and dynamic jar synced successfully.")
+          except Exception as e:
+              print(f"Error loading fty.json: {e}")
 
           # 2. 从 xiaosa 动态抓取其余 4 个标准体育源
           xiaosa_keys = ["88看球", "飞球体育", "瓜子体育", "咖啡体育"]
@@ -59,13 +65,15 @@ jobs:
                   s_name = site.get("name", "")
                   if s_key in xiaosa_keys and "4K" not in s_name and "盘" not in s_name:
                       collected_sites[s_key] = site
+              print("Xiaosa sources synced successfully.")
           except Exception as e:
               print(f"Error loading xiaosa api.json: {e}")
 
-          # 3. 按固定 7 个源顺序排列
+          # 3. 按固定 7 个源顺序整齐排列
           ordered_keys = ["88看球", "看球", "飞球体育", "瓜子体育", "咖啡体育", "吃瓜", "多多"]
           ordered_sites = [collected_sites[k] for k in ordered_keys if k in collected_sites]
 
+          # 主配置：全局 spider 留给 xiaosa 体系
           main_config = {
               "spider": "https://raw.githubusercontent.com/qist/tvbox/master/jar/spider.jar",
               "sites": ordered_sites,
@@ -78,7 +86,7 @@ jobs:
 
           with open("sport.json", "w", encoding="utf-8") as f:
               json.dump(main_config, f, ensure_ascii=False, indent=4)
-          print(f"Success! Cleaned up code, total 7 independent sports sites built.")
+          print(f"Success! Total 7 fully dynamic independent sports sites built.")
           '
 
       - name: Commit and push changes using native git
@@ -87,5 +95,5 @@ jobs:
           git config --global user.email "github-actions[bot]@users.noreply.github.data"
           git add sport.json
           git status
-          git commit -m "Refactor script with shared jar variable for simplicity" || echo "No changes to commit"
+          git commit -m "Auto-sync both xiaosa and fty sources with fully dynamic jars" || echo "No changes to commit"
           git push
