@@ -1,4 +1,4 @@
-name: Sync TVBox Main API
+name: Sync TVBox Assets and Config
 
 on:
   workflow_dispatch:
@@ -17,7 +17,51 @@ jobs:
         with:
           python-version: '3.10'
 
-      - name: Run sync script and save json
+      - name: Create jar directory
+        run: mkdir -p jar
+
+      - name: Download and sync upstream jar assets
+        run: |
+          python -c '
+          import urllib.request
+          import os
+
+          # 1. 同步 xiaosa 的 spider.jar
+          jar_url = "https://raw.githubusercontent.com/qist/tvbox/master/jar/spider.jar"
+          jar_path = "jar/spider.jar"
+          try:
+              print(f"Downloading {jar_url}...")
+              urllib.request.urlretrieve(jar_url, jar_path)
+              print("spider.jar synced successfully.")
+          except Exception as e:
+              print(f"Error downloading spider.jar: {e}")
+
+          # 2. 动态抓取 fty.json 里的 spider 路径并同步 fan.txt
+          fty_txt_url = "https://raw.githubusercontent.com/qist/tvbox/master/jar/fan.txt"
+          try:
+              req_fty = urllib.request.urlopen("https://raw.githubusercontent.com/qist/tvbox/master/fty.json")
+              data_fty = json.loads(req_fty.read().decode("utf-8"))
+              if "spider" in data_fty and data_fty["spider"]:
+                  raw_spider = data_fty["spider"]
+                  # 提取纯 URL（去掉后面的 ;md5;... 尾巴）
+                  clean_url = raw_spider.split(";")[0]
+                  if clean_url.startswith("./"):
+                      fty_txt_url = "https://raw.githubusercontent.com/qist/tvbox/master/" + clean_url[2:]
+                  else:
+                      fty_txt_url = clean_url
+          except Exception as e:
+              print(f"Error extracting fty spider path: {e}")
+
+          txt_path = "jar/fan.txt"
+          try:
+              print(f"Downloading {fty_txt_url}...")
+              urllib.request.urlretrieve(fty_txt_url, txt_path)
+              print("fan.txt synced successfully.")
+          except Exception as e:
+              print(f"Error downloading fan.txt: {e}")
+          '
+
+      - name: Generate sport.json with local relative paths
         run: |
           python -c '
           import urllib.request
@@ -25,8 +69,8 @@ jobs:
 
           collected_sites = {}
 
-          # 1. 动态抓取 fty.json，自动捕获上游最新的 spider 驱动路径，并赋值给 FTY 的 3 个源
-          fty_spider = "https://raw.githubusercontent.com/qist/tvbox/master/jar/fan.txt" # 默认兜底
+          # 1. 动态抓取 fty.json 的源，并将它们的 jar 统一指向本地相对路径
+          local_fty_jar = "./jar/fan.txt"
           fty_mapping = {
               "看球": "⚽八八┃看球",
               "吃瓜": "🏐吃瓜┃看球",
@@ -35,23 +79,14 @@ jobs:
           try:
               req_fty = urllib.request.urlopen("https://raw.githubusercontent.com/qist/tvbox/master/fty.json")
               data_fty = json.loads(req_fty.read().decode("utf-8"))
-              
-              # 自动提取 fty.json 里的全局 spider 配置（支持带 md5 后缀的完整字符串）
-              if "spider" in data_fty and data_fty["spider"]:
-                  raw_spider = data_fty["spider"]
-                  if raw_spider.startswith("./"):
-                      fty_spider = "https://raw.githubusercontent.com/qist/tvbox/master/" + raw_spider[2:]
-                  else:
-                      fty_spider = raw_spider
-
               for site in data_fty.get("sites", []):
                   s_key = site.get("key", "")
                   if s_key in fty_mapping:
                       site["name"] = fty_mapping[s_key]
-                      # 动态挂载上游最新的专属 jar 驱动（包含上游自带的 md5 校验）
-                      site["jar"] = fty_spider
+                      # 关键：使用本地相对路径，彻底摆脱 raw 链接直连限制
+                      site["jar"] = local_fty_jar
                       collected_sites[s_key] = site
-              print("FTY sources and dynamic jar synced successfully.")
+              print("FTY sources processed with local jar.")
           except Exception as e:
               print(f"Error loading fty.json: {e}")
 
@@ -65,7 +100,7 @@ jobs:
                   s_name = site.get("name", "")
                   if s_key in xiaosa_keys and "4K" not in s_name and "盘" not in s_name:
                       collected_sites[s_key] = site
-              print("Xiaosa sources synced successfully.")
+              print("Xiaosa sources processed.")
           except Exception as e:
               print(f"Error loading xiaosa api.json: {e}")
 
@@ -73,9 +108,9 @@ jobs:
           ordered_keys = ["88看球", "看球", "飞球体育", "瓜子体育", "咖啡体育", "吃瓜", "多多"]
           ordered_sites = [collected_sites[k] for k in ordered_keys if k in collected_sites]
 
-          # 主配置：全局 spider 留给 xiaosa 体系
+          # 全局主 spider 也使用本地相对路径
           main_config = {
-              "spider": "https://raw.githubusercontent.com/qist/tvbox/master/jar/spider.jar",
+              "spider": "./jar/spider.jar",
               "sites": ordered_sites,
               "parses": [
                   {"name": "聚合", "type": 3, "url": "json"},
@@ -86,14 +121,14 @@ jobs:
 
           with open("sport.json", "w", encoding="utf-8") as f:
               json.dump(main_config, f, ensure_ascii=False, indent=4)
-          print(f"Success! Total 7 fully dynamic independent sports sites built.")
+          print("Success! sport.json generated with local relative paths.")
           '
 
-      - name: Commit and push changes using native git
+      - name: Commit and push changes if any file updated
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.data"
-          git add sport.json
+          git add sport.json jar/
           git status
-          git commit -m "Auto-sync both xiaosa and fty sources with fully dynamic jars" || echo "No changes to commit"
+          git commit -m "Auto-sync upstream assets and update sport.json" || echo "No changes to commit"
           git push
