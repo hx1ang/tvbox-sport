@@ -3,21 +3,15 @@
     "sites": [
         {
             "key": "多多",
-            "name": "多多 • 4K",
+            "name": "🏀多多┃回放",
             "type": 3,
-            "api": "csp_PanWebShare",
-            "searchable": 1,
-            "quickSearch": 1,
-            "filterable": 1,
-            "changeable": 1,
-            "ext": {
-                "site": [
-                    "https://tv.yydsys.top",
-                    "https://tv.yydsys.cc",
-                    "https://tv.214521.xyz"
-                ]
-            },
-            "timeout": 60
+            "api": "csp_DoubaoGuard",
+            "searchable": 0,
+            "quickSearch": 0,
+            "changeable": 0,
+            "style": {
+                "type": "list"
+            }
         },
         {
             "key": "88看球",
@@ -60,6 +54,42 @@
             "name": "咖啡 • 体育",
             "type": 3,
             "api": "csp_SportsKafei",
+            "searchable": 0,
+            "quickSearch": 0,
+            "changeable": 0,
+            "style": {
+                "type": "list"
+            }
+        },
+        {
+            "key": "戏曲多多",
+            "name": "戏曲 • 多多",
+            "type": 3,
+            "api": "csp_AppLY",
+            "searchable": 0,
+            "quickSearch": 0,
+            "changeable": 0,
+            "style": {
+                "type": "list"
+            }
+        },
+        {
+            "key": "看球",
+            "name": "⚽八八┃看球",
+            "type": 3,
+            "api": "csp_KanqiuGuard",
+            "timeout": 10,
+            "searchable": 0,
+            "changeable": 0,
+            "style": {
+                "type": "list"
+            }
+        },
+        {
+            "key": "吃瓜",
+            "name": "🏐吃瓜┃看球",
+            "type": 3,
+            "api": "csp_LiveGzGuard",
             "searchable": 0,
             "quickSearch": 0,
             "changeable": 0,
