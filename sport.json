@@ -1,0 +1,111 @@
+{
+    "spider": "https://raw.githubusercontent.com/qist/tvbox/master/jar/spider.jar",
+    "sites": [
+        {
+            "key": "多多",
+            "name": "🏀多多┃回放",
+            "type": 3,
+            "api": "csp_DoubaoGuard",
+            "searchable": 0,
+            "quickSearch": 0,
+            "changeable": 0,
+            "style": {
+                "type": "list"
+            }
+        },
+        {
+            "key": "88看球",
+            "name": "88 • 看球",
+            "type": 3,
+            "api": "csp_Sports88",
+            "searchable": 0,
+            "quickSearch": 0,
+            "changeable": 0,
+            "style": {
+                "type": "list"
+            }
+        },
+        {
+            "key": "飞球体育",
+            "name": "飞球 • 体育",
+            "type": 3,
+            "api": "csp_SportsFeiqiu",
+            "searchable": 0,
+            "quickSearch": 0,
+            "changeable": 0,
+            "style": {
+                "type": "list"
+            }
+        },
+        {
+            "key": "瓜子体育",
+            "name": "瓜子 • 体育",
+            "type": 3,
+            "api": "csp_SportsGuazi",
+            "searchable": 0,
+            "quickSearch": 0,
+            "changeable": 0,
+            "style": {
+                "type": "list"
+            }
+        },
+        {
+            "key": "咖啡体育",
+            "name": "咖啡 • 体育",
+            "type": 3,
+            "api": "csp_SportsKafei",
+            "searchable": 0,
+            "quickSearch": 0,
+            "changeable": 0,
+            "style": {
+                "type": "list"
+            }
+        },
+        {
+            "key": "看球",
+            "name": "⚽八八┃看球",
+            "type": 3,
+            "api": "csp_KanqiuGuard",
+            "timeout": 10,
+            "searchable": 0,
+            "changeable": 0,
+            "style": {
+                "type": "list"
+            }
+        },
+        {
+            "key": "吃瓜",
+            "name": "🏐吃瓜┃看球",
+            "type": 3,
+            "api": "csp_LiveGzGuard",
+            "searchable": 0,
+            "quickSearch": 0,
+            "changeable": 0,
+            "style": {
+                "type": "list"
+            }
+        }
+    ],
+    "parses": [
+        {
+            "name": "聚合",
+            "type": 3,
+            "url": "json"
+        },
+        {
+            "name": "咸鱼",
+            "type": 0,
+            "url": "https://jx.xyflv.cc/?url="
+        }
+    ],
+    "flags": [
+        "qq",
+        "qiyi",
+        "youku",
+        "mgtv",
+        "letv",
+        "pptv",
+        "sohu",
+        "bilibili"
+    ]
+}
