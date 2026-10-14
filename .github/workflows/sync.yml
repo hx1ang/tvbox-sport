@@ -24,48 +24,32 @@ jobs:
           import json
 
           collected_sites = {}
+          common_jar = "https://xiuxiu-pro-new.meitudata.com/posters/224984cc747efdb5fb1a529803032e0f.jpg;md5;c9024ccf34209d26eb556c728c3f07fa"
 
-          # 1. 显式定义 fty 的 3 个 Guard 核心源，并直接带上它们原生的 jar 驱动和全部属性
-          fty_guard_sources = {
-              "看球": {
-                  "key": "看球",
-                  "name": "⚽八八┃看球",
+          # 1. 简化的 FTY 核心源（共用同一个 jar 驱动）
+          fty_guard_sources = [
+              {"key": "看球", "name": "⚽八八┃看球", "api": "csp_KanqiuGuard"},
+              {"key": "吃瓜", "name": "🏐吃瓜┃看球", "api": "csp_LiveGzGuard"},
+              {"key": "多多", "name": "🏀多多┃回放", "api": "csp_DoubaoGuard"}
+          ]
+
+          for item in fty_guard_sources:
+              collected_sites[item["key"]] = {
+                  "key": item["key"],
+                  "name": item["name"],
                   "type": 3,
-                  "api": "csp_KanqiuGuard",
-                  "timeout": 10,
+                  "api": item["api"],
                   "searchable": 0,
+                  "quickSearch": 0 if item["key"] != "看球" else None,
                   "changeable": 0,
                   "style": {"type": "list"},
-                  "jar": "https://xiuxiu-pro-new.meitudata.com/posters/224984cc747efdb5fb1a529803032e0f.jpg;md5;c9024ccf34209d26eb556c728c3f07fa"
-              },
-              "吃瓜": {
-                  "key": "吃瓜",
-                  "name": "🏐吃瓜┃看球",
-                  "type": 3,
-                  "api": "csp_LiveGzGuard",
-                  "searchable": 0,
-                  "quickSearch": 0,
-                  "changeable": 0,
-                  "style": {"type": "list"},
-                  "jar": "https://xiuxiu-pro-new.meitudata.com/posters/224984cc747efdb5fb1a529803032e0f.jpg;md5;c9024ccf34209d26eb556c728c3f07fa"
-              },
-              "多多": {
-                  "key": "多多",
-                  "name": "🏀多多┃回放",
-                  "type": 3,
-                  "api": "csp_DoubaoGuard",
-                  "searchable": 0,
-                  "quickSearch": 0,
-                  "changeable": 0,
-                  "style": {"type": "list"},
-                  "jar": "https://xiuxiu-pro-new.meitudata.com/posters/224984cc747efdb5fb1a529803032e0f.jpg;md5;c9024ccf34209d26eb556c728c3f07fa"
+                  "jar": common_jar
               }
-          }
-          
-          for k, v in fty_guard_sources.items():
-              collected_sites[k] = v
+              # 顺手清理掉值为 None 的键（保持格式干净）
+              if collected_sites[item["key"]].get("quickSearch") is None:
+                  del collected_sites[item["key"]]["quickSearch"]
 
-          # 2. 从 xiaosa 动态抓取其余 4 个标准体育源（88看球、飞球体育、瓜子体育、咖啡体育）
+          # 2. 从 xiaosa 动态抓取其余 4 个标准体育源
           xiaosa_keys = ["88看球", "飞球体育", "瓜子体育", "咖啡体育"]
           try:
               req_xiaosa = urllib.request.urlopen("https://raw.githubusercontent.com/qist/tvbox/master/xiaosa/api.json")
@@ -78,12 +62,9 @@ jobs:
           except Exception as e:
               print(f"Error loading xiaosa api.json: {e}")
 
-          # 严格按你要求的 7 个源顺序整齐排列
+          # 3. 按固定 7 个源顺序排列
           ordered_keys = ["88看球", "看球", "飞球体育", "瓜子体育", "咖啡体育", "吃瓜", "多多"]
-          ordered_sites = []
-          for k in ordered_keys:
-              if k in collected_sites:
-                  ordered_sites.append(collected_sites[k])
+          ordered_sites = [collected_sites[k] for k in ordered_keys if k in collected_sites]
 
           main_config = {
               "spider": "https://raw.githubusercontent.com/qist/tvbox/master/jar/spider.jar",
@@ -97,7 +78,7 @@ jobs:
 
           with open("sport.json", "w", encoding="utf-8") as f:
               json.dump(main_config, f, ensure_ascii=False, indent=4)
-          print(f"Success! Total 7 independent sports sites built.")
+          print(f"Success! Cleaned up code, total 7 independent sports sites built.")
           '
 
       - name: Commit and push changes using native git
@@ -106,5 +87,5 @@ jobs:
           git config --global user.email "github-actions[bot]@users.noreply.github.data"
           git add sport.json
           git status
-          git commit -m "Auto-sync 7 sports sources with explicit native fty jars" || echo "No changes to commit"
+          git commit -m "Refactor script with shared jar variable for simplicity" || echo "No changes to commit"
           git push
