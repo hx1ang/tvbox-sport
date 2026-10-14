@@ -25,35 +25,50 @@ jobs:
 
           collected_sites = {}
 
-          # 1. 优先从 fty.json 中精准抓取核心 Guard 体育源（八八、多多、吃瓜）
-          fty_target_keys = ["看球", "多多", "吃瓜"]
+          # 1. 从 fty.json 中只抓取我们需要的多多(回放)和吃瓜
+          fty_targets = {
+              "多多": "🏀多多┃回放",
+              "吃瓜": "🏐吃瓜┃看球"
+          }
           try:
-              req2 = urllib.request.urlopen("https://raw.githubusercontent.com/qist/tvbox/main/fty.json")
-              data2 = json.loads(req2.read().decode("utf-8"))
-              for site in data2.get("sites", []):
+              req_fty = urllib.request.urlopen("https://raw.githubusercontent.com/qist/tvbox/master/fty.json")
+              data_fty = json.loads(req_fty.read().decode("utf-8"))
+              for site in data_fty.get("sites", []):
                   s_key = site.get("key", "")
-                  if s_key in fty_target_keys:
+                  if s_key in fty_targets:
+                      site["name"] = fty_targets[s_key]
                       collected_sites[s_key] = site
           except Exception as e:
-              print(f"Error fty: {e}")
+              print(f"Error loading fty.json: {e}")
 
-          # 2. 从 xiaosa 中补充其他体育源（飞球、瓜子、咖啡等，同时防止网盘源混入）
-          xiaosa_keys = ["飞球体育", "瓜子体育", "咖啡体育", "88看球"]
+          # 2. 从 xiaosa 抓取 88看球、飞球体育、瓜子体育、咖啡体育
+          xiaosa_targets = {
+              "88看球": "⚽八八┃看球",
+              "飞球体育": "⚽飞球┃体育",
+              "瓜子体育": "⚾瓜子┃体育",
+              "咖啡体育": "☕咖啡┃体育"
+          }
           try:
-              req1 = urllib.request.urlopen("https://raw.githubusercontent.com/qist/tvbox/master/xiaosa/api.json")
-              data1 = json.loads(req1.read().decode("utf-8"))
-              for site in data1.get("sites", []):
+              req_xiaosa = urllib.request.urlopen("https://raw.githubusercontent.com/qist/tvbox/master/xiaosa/api.json")
+              data_xiaosa = json.loads(req_xiaosa.read().decode("utf-8"))
+              for site in data_xiaosa.get("sites", []):
                   s_key = site.get("key", "")
                   s_name = site.get("name", "")
-                  # 严格过滤掉带有网盘或4K影视的误伤
-                  if s_key in xiaosa_keys and "4K" not in s_name and "盘" not in s_name:
+                  if s_key in xiaosa_targets and "4K" not in s_name and "盘" not in s_name:
+                      site["name"] = xiaosa_targets[s_key]
                       collected_sites[s_key] = site
           except Exception as e:
-              print(f"Error xiaosa: {e}")
+              print(f"Error loading xiaosa api.json: {e}")
+
+          # 按你习惯的顺序排列
+          ordered_sites = []
+          for k in ["88看球", "飞球体育", "瓜子体育", "咖啡体育", "吃瓜", "多多"]:
+              if k in collected_sites:
+                    ordered_sites.append(collected_sites[k])
 
           main_config = {
               "spider": "https://raw.githubusercontent.com/qist/tvbox/master/jar/spider.jar",
-              "sites": list(collected_sites.values()),
+              "sites": ordered_sites,
               "parses": [
                   {"name": "聚合", "type": 3, "url": "json"},
                   {"name": "咸鱼", "type": 0, "url": "https://jx.xyflv.cc/?url="}
@@ -63,7 +78,7 @@ jobs:
 
           with open("sport.json", "w", encoding="utf-8") as f:
               json.dump(main_config, f, ensure_ascii=False, indent=4)
-          print("Success! Total clean sports sites:", len(main_config["sites"]))
+          print(f"Success! Total sports sites: {len(ordered_sites)}")
           '
 
       - name: Commit and push changes using native git
@@ -72,5 +87,5 @@ jobs:
           git config --global user.email "github-actions[bot]@users.noreply.github.data"
           git add sport.json
           git status
-          git commit -m "Auto-sync ultimate sports configuration with correct Guard apis" || echo "No changes to commit"
+          git commit -m "Auto-sync sports with xiaosa 88kanqiu and fty replay" || echo "No changes to commit"
           git push
