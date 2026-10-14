@@ -18,12 +18,13 @@
             "name": "⚽八八┃看球",
             "type": 3,
             "api": "csp_KanqiuGuard",
+            "timeout": 10,
             "searchable": 0,
             "changeable": 0,
             "style": {
                 "type": "list"
             },
-            "jar": "https://xiuxiu-pro-new.meitudata.com/posters/224984cc747efdb5fb1a529803032e0f.jpg;md5;c9024ccf34209d26eb556c728c3f07fa"
+            "jar": "https://raw.githubusercontent.com/qist/tvbox/master/jar/fan.txt;md5;c9024ccf34209d26eb556c728c3f07fa"
         },
         {
             "key": "飞球体育",
@@ -72,7 +73,7 @@
             "style": {
                 "type": "list"
             },
-            "jar": "https://xiuxiu-pro-new.meitudata.com/posters/224984cc747efdb5fb1a529803032e0f.jpg;md5;c9024ccf34209d26eb556c728c3f07fa"
+            "jar": "https://raw.githubusercontent.com/qist/tvbox/master/jar/fan.txt;md5;c9024ccf34209d26eb556c728c3f07fa"
         },
         {
             "key": "多多",
@@ -85,7 +86,7 @@
             "style": {
                 "type": "list"
             },
-            "jar": "https://xiuxiu-pro-new.meitudata.com/posters/224984cc747efdb5fb1a529803032e0f.jpg;md5;c9024ccf34209d26eb556c728c3f07fa"
+            "jar": "https://raw.githubusercontent.com/qist/tvbox/master/jar/fan.txt;md5;c9024ccf34209d26eb556c728c3f07fa"
         }
     ],
     "parses": [
