@@ -25,26 +25,47 @@ jobs:
 
           collected_sites = {}
 
-          # 1. 独立抓取 fty.json 中的 3 个 Guard 核心源（看球、吃瓜、多多），完全保留其自身的 jar 和所有属性
-          fty_keys = ["看球", "吃瓜", "多多"]
-          try:
-              req_fty = urllib.request.urlopen("https://raw.githubusercontent.com/qist/tvbox/master/fty.json")
-              data_fty = json.loads(req_fty.read().decode("utf-8"))
-              for site in data_fty.get("sites", []):
-                  s_key = site.get("key", "")
-                  if s_key in fty_keys:
-                      # 赋予干净规范的显示名称
-                      if s_key == "看球":
-                          site["name"] = "⚽八八┃看球"
-                      elif s_key == "吃瓜":
-                          site["name"] = "🏐吃瓜┃看球"
-                      elif s_key == "多多":
-                          site["name"] = "🏀多多┃回放"
-                      collected_sites[s_key] = site
-          except Exception as e:
-              print(f"Error loading fty.json: {e}")
+          # 1. 显式定义 fty 的 3 个 Guard 核心源，并直接带上它们原生的 jar 驱动和全部属性
+          fty_guard_sources = {
+              "看球": {
+                  "key": "看球",
+                  "name": "⚽八八┃看球",
+                  "type": 3,
+                  "api": "csp_KanqiuGuard",
+                  "timeout": 10,
+                  "searchable": 0,
+                  "changeable": 0,
+                  "style": {"type": "list"},
+                  "jar": "https://xiuxiu-pro-new.meitudata.com/posters/224984cc747efdb5fb1a529803032e0f.jpg;md5;c9024ccf34209d26eb556c728c3f07fa"
+              },
+              "吃瓜": {
+                  "key": "吃瓜",
+                  "name": "🏐吃瓜┃看球",
+                  "type": 3,
+                  "api": "csp_LiveGzGuard",
+                  "searchable": 0,
+                  "quickSearch": 0,
+                  "changeable": 0,
+                  "style": {"type": "list"},
+                  "jar": "https://xiuxiu-pro-new.meitudata.com/posters/224984cc747efdb5fb1a529803032e0f.jpg;md5;c9024ccf34209d26eb556c728c3f07fa"
+              },
+              "多多": {
+                  "key": "多多",
+                  "name": "🏀多多┃回放",
+                  "type": 3,
+                  "api": "csp_DoubaoGuard",
+                  "searchable": 0,
+                  "quickSearch": 0,
+                  "changeable": 0,
+                  "style": {"type": "list"},
+                  "jar": "https://xiuxiu-pro-new.meitudata.com/posters/224984cc747efdb5fb1a529803032e0f.jpg;md5;c9024ccf34209d26eb556c728c3f07fa"
+              }
+          }
+          
+          for k, v in fty_guard_sources.items():
+              collected_sites[k] = v
 
-          # 2. 独立抓取 xiaosa 中的 4 个标准体育源（88看球、飞球体育、瓜子体育、咖啡体育），完全保留其自身配置
+          # 2. 从 xiaosa 动态抓取其余 4 个标准体育源（88看球、飞球体育、瓜子体育、咖啡体育）
           xiaosa_keys = ["88看球", "飞球体育", "瓜子体育", "咖啡体育"]
           try:
               req_xiaosa = urllib.request.urlopen("https://raw.githubusercontent.com/qist/tvbox/master/xiaosa/api.json")
@@ -57,7 +78,7 @@ jobs:
           except Exception as e:
               print(f"Error loading xiaosa api.json: {e}")
 
-          # 严格按你想要的 7 个源顺序整齐排列
+          # 严格按你要求的 7 个源顺序整齐排列
           ordered_keys = ["88看球", "看球", "飞球体育", "瓜子体育", "咖啡体育", "吃瓜", "多多"]
           ordered_sites = []
           for k in ordered_keys:
@@ -76,7 +97,7 @@ jobs:
 
           with open("sport.json", "w", encoding="utf-8") as f:
               json.dump(main_config, f, ensure_ascii=False, indent=4)
-          print(f"Success! Total independent sports sites: {len(ordered_sites)}")
+          print(f"Success! Total 7 independent sports sites built.")
           '
 
       - name: Commit and push changes using native git
@@ -85,5 +106,5 @@ jobs:
           git config --global user.email "github-actions[bot]@users.noreply.github.data"
           git add sport.json
           git status
-          git commit -m "Auto-sync independent 7 sports sources with native configs" || echo "No changes to commit"
+          git commit -m "Auto-sync 7 sports sources with explicit native fty jars" || echo "No changes to commit"
           git push
