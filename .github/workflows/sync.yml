@@ -23,42 +23,19 @@ jobs:
           import urllib.request
           import json
 
-          # 绝对精准匹配的 key 白名单（只收录这几个纯体育源，绝不带杂项）
-          exact_keys = ["88看球", "飞球体育", "瓜子体育", "咖啡体育", "吃瓜", "多多", "Kanqiu", "Duoduo", "Chigua"]
-          
-          # 必须包含的精准体育后缀（防止单纯叫“多多”但不是体育源的混进来）
-          required_tags = ["看球", "回放", "体育"]
-
           collected_sites = {}
 
-          def filter_and_add(sites_list):
-              for site in sites_list:
-                  s_key = site.get("key", "")
-                  s_name = site.get("name", "")
-                  
-                  # 必须满足：key 在白名单里，且名字里必须带有“看球”、“回放”或“体育”
-                  is_exact_key = s_key in exact_keys
-                  has_sport_tag = any(tag in s_name for tag in required_tags)
-                  
-                  # 如果是“戏曲多多”，它的 key 虽然叫多多，但 name 是“戏曲 • 多多”，没有体育标签，会被完美拦截！
-                  if is_exact_key and has_sport_tag:
-                      collected_sites[s_key] = site
-
-          # 1. 抓取 xiaosa 源
+          # 仅精准抓取 xiaosa 里的体育源（xiaosa 的源目前测试最稳定、能正常播放）
+          xiaosa_keys = ["88看球", "飞球体育", "瓜子体育", "咖啡体育", "吃瓜", "多多"]
+          
           try:
               req1 = urllib.request.urlopen("https://raw.githubusercontent.com/qist/tvbox/master/xiaosa/api.json")
               data1 = json.loads(req1.read().decode("utf-8"))
-              filter_and_add(data1.get("sites", []))
+              for site in data1.get("sites", []):
+                  if site.get("key") in xiaosa_keys:
+                      collected_sites[site["key"]] = site
           except Exception as e:
-              print(f"Error 1: {e}")
-
-          # 2. 抓取 fty 源
-          try:
-              req2 = urllib.request.urlopen("https://raw.githubusercontent.com/qist/tvbox/master/fty.json")
-              data2 = json.loads(req2.read().decode("utf-8"))
-              filter_and_add(data2.get("sites", []))
-          except Exception as e:
-              print(f"Error 2: {e}")
+              print(f"Error: {e}")
 
           main_config = {
               "spider": "https://raw.githubusercontent.com/qist/tvbox/master/jar/spider.jar",
@@ -72,7 +49,7 @@ jobs:
 
           with open("sport.json", "w", encoding="utf-8") as f:
               json.dump(main_config, f, ensure_ascii=False, indent=4)
-          print("Success! Total precise sports sites:", len(main_config["sites"]))
+          print("Success! Total stable sites:", len(main_config["sites"]))
           '
 
       - name: Commit and push changes using native git
@@ -81,5 +58,5 @@ jobs:
           git config --global user.email "github-actions[bot]@users.noreply.github.data"
           git add sport.json
           git status
-          git commit -m "Auto-sync strictly filtered sports sites" || echo "No changes to commit"
+          git commit -m "Auto-sync stable xiaosa sports sites only" || echo "No changes to commit"
           git push
