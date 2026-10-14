@@ -26,6 +26,7 @@ jobs:
           target_keys = ["88看球", "飞球体育", "瓜子体育", "咖啡体育", "看球", "多多", "吃瓜"]
           collected_sites = {}
 
+          # 1. 抓取 xiaosa 源
           try:
               req1 = urllib.request.urlopen("https://raw.githubusercontent.com/qist/tvbox/master/xiaosa/api.json")
               data1 = json.loads(req1.read().decode("utf-8"))
@@ -35,8 +36,9 @@ jobs:
           except Exception as e:
               print(f"Error 1: {e}")
 
+          # 2. 修正后的 fty.json 原始直链地址
           try:
-              req2 = urllib.request.urlopen("https://raw.githubusercontent.com/qist/tvbox/master/fty.json")
+              req2 = urllib.request.urlopen("https://raw.githubusercontent.com/qist/tvbox/main/fty.json")
               data2 = json.loads(req2.read().decode("utf-8"))
               for site in data2.get("sites", []):
                   if site.get("key") in target_keys:
@@ -65,5 +67,5 @@ jobs:
           git config --global user.email "github-actions[bot]@users.noreply.github.data"
           git add sport.json
           git status
-          git commit -m "Auto-sync sport.json via native git" || echo "No changes to commit"
+          git commit -m "Auto-sync sport.json with correct fty path" || echo "No changes to commit"
           git push
