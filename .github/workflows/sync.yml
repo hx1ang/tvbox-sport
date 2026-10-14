@@ -2,7 +2,7 @@ name: Sync TVBox Main API
 
 on:
   scheduled:
-    - cron: '0 13 * * *' # 每天北京时间晚上 21:00 自动更新
+    - cron: '0 13 * * *'
   workflow_dispatch:
 
 jobs:
@@ -26,7 +26,6 @@ jobs:
           target_keys = ["88看球", "飞球体育", "瓜子体育", "咖啡体育", "看球", "多多", "吃瓜"]
           collected_sites = {}
 
-          # 拉取原作者的两个接口并提取你指定的体育源
           try:
               req1 = urllib.request.urlopen("https://raw.githubusercontent.com/qist/tvbox/master/xiaosa/api.json")
               data1 = json.loads(req1.read().decode("utf-8"))
@@ -45,8 +44,6 @@ jobs:
           except Exception as e:
               print(f"Error 2: {e}")
 
-          # 组装成一个完整的、带有 jar 包驱动的 TvBox 主接口
-          # 这里复用了 qist 仓库标准的 spider 和基础配置结构
           main_config = {
               "spider": "https://raw.githubusercontent.com/qist/tvbox/master/jar/spider.jar",
               "sites": list(collected_sites.values()),
